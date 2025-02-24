@@ -1,22 +1,25 @@
 package trpc
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 )
 
+type ProcedureHandler func(IApp, ...*echo.Group)
+
 type IProcedure[T, R any] interface {
 	Input(*Validator) IProcedure[T, R]
-	Query(func(Context[T, R]) error) func(IApp)
-	Mutation(func(Context[T, R]) error) func(IApp)
+	Use(...func(Context[T, R]) error) IProcedure[T, R]
+	Query(func(Context[T, R]) error) ProcedureHandler
+	Mutation(func(Context[T, R]) error) ProcedureHandler
 }
 
 type Procedure[T, R any] struct {
 	name      string
 	validator *Validator
+	ctx       Context[T, R]
 }
 
 func (p *Procedure[T, R]) Input(v *Validator) IProcedure[T, R] {
@@ -24,6 +27,10 @@ func (p *Procedure[T, R]) Input(v *Validator) IProcedure[T, R] {
 		p.validator = v
 	}
 
+	return p
+}
+
+func (p *Procedure[T, R]) Use(middlewares ...func(Context[T, R]) error) IProcedure[T, R] {
 	return p
 }
 
@@ -40,22 +47,25 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback func(Context[T, R]) e
 		}
 	}
 
-	return callback(Context[T, R]{ec: c, Input: input})
+	p.ctx.ec = c
+	p.ctx.Input = input
+
+	return callback(p.ctx)
 }
 
-func (p *Procedure[T, R]) Query(callback func(Context[T, R]) error) func(IApp) {
-	return func(t IApp) {
-		t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) })
+func (p *Procedure[T, R]) Query(callback func(Context[T, R]) error) ProcedureHandler {
+	return func(t IApp, groups ...*echo.Group) {
+		p.ctx.sharedValue = t.Ctx().sharedValue
 
-		fmt.Printf("Mapped Query: %s\n", p.name)
+		t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
 	}
 }
 
-func (p *Procedure[T, R]) Mutation(callback func(Context[T, R]) error) func(IApp) {
-	return func(t IApp) {
-		t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) })
+func (p *Procedure[T, R]) Mutation(callback func(Context[T, R]) error) ProcedureHandler {
+	return func(t IApp, groups ...*echo.Group) {
+		p.ctx.sharedValue = t.Ctx().sharedValue
 
-		fmt.Printf("Mapped Mutation: %s\n", p.name)
+		t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
 	}
 }
 
