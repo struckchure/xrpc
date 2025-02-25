@@ -2,24 +2,30 @@ package trpc
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"gopkg.in/yaml.v3"
 )
 
 type IApp interface {
+	Spec(modifier func(TRPCSpec) TRPCSpec)
 	Server() *echo.Echo
 	Ctx() Context[any, any]
 	Use(...func(Context[any, any]) error) IApp
 	Router(string, ...func(IApp, ...*echo.Group)) IApp
-	Get(string, func(c echo.Context) error, ...*echo.Group)
-	Post(string, func(c echo.Context) error, ...*echo.Group)
+	Get(string, func(c echo.Context) error, ...*echo.Group) string
+	Post(string, func(c echo.Context) error, ...*echo.Group) string
 	Start(port int) error
 }
 
 type App struct {
-	srv *echo.Echo
+	spec        TRPCSpec
+	autoGenSpec bool
+	specPath    string
 
+	srv *echo.Echo
 	ctx Context[any, any]
 }
 
@@ -29,6 +35,10 @@ func (a *App) Server() *echo.Echo {
 
 func (a *App) Ctx() Context[any, any] {
 	return a.ctx
+}
+
+func (a *App) Spec(modifier func(TRPCSpec) TRPCSpec) {
+	a.spec = modifier(a.spec)
 }
 
 func (a *App) Use(middlewares ...func(Context[any, any]) error) IApp {
@@ -63,29 +73,61 @@ func (a *App) Router(path string, procedures ...func(IApp, ...*echo.Group)) IApp
 	return a
 }
 
-func (a *App) Get(path string, handler func(c echo.Context) error, group ...*echo.Group) {
+func (a *App) Get(path string, handler func(c echo.Context) error, group ...*echo.Group) string {
 	if len(group) > 0 {
-		group[0].GET(path, handler)
-		return
+		return group[0].GET(path, handler).Path
 	}
 
-	a.srv.GET(path, handler)
+	return a.srv.GET(path, handler).Path
 }
 
-func (a *App) Post(path string, handler func(c echo.Context) error, group ...*echo.Group) {
+func (a *App) Post(path string, handler func(c echo.Context) error, group ...*echo.Group) string {
 	if len(group) > 0 {
-		group[0].POST(path, handler)
-		return
+		return group[0].POST(path, handler).Path
 	}
 
-	a.srv.POST(path, handler)
+	return a.srv.POST(path, handler).Path
 }
 
 func (a *App) Start(port int) error {
+	if a.autoGenSpec {
+		a.Spec(func(t TRPCSpec) TRPCSpec {
+			yamlData, err := yaml.Marshal(&t)
+			if err != nil {
+				log.Fatalf("Error marshaling YAML: %v", err)
+			}
+			fmt.Println(a.specPath)
+			err = writeFile(a.specPath, string(yamlData))
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			return t
+		})
+	}
+
 	return a.srv.Start(fmt.Sprintf(":%d", port))
 }
 
-func InitTRPC() IApp {
+type InitTRPCConfig struct {
+	Name            string
+	ServerUrl       string
+	AutoGenTRPCSpec bool
+	SpecPath        string
+}
+
+func InitTRPC(cfg ...InitTRPCConfig) IApp {
+	_cfg := InitTRPCConfig{
+		Name:            "TRPC Spec",
+		ServerUrl:       "localhost:9090",
+		AutoGenTRPCSpec: true,
+		SpecPath:        "trpc.yaml",
+	}
+
+	if len(cfg) > 0 {
+		_cfg = cfg[0]
+	}
+
 	srv := echo.New()
 
 	srv.Pre(middleware.AddTrailingSlash())
@@ -94,6 +136,13 @@ func InitTRPC() IApp {
 	}))
 
 	return &App{
+		spec: TRPCSpec{
+			Name:      _cfg.Name,
+			ServerUrl: _cfg.ServerUrl,
+		},
+		autoGenSpec: _cfg.AutoGenTRPCSpec,
+		specPath:    _cfg.SpecPath,
+
 		srv: srv,
 		ctx: Context[any, any]{sharedValue: map[string]interface{}{}},
 	}

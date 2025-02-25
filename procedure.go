@@ -57,7 +57,18 @@ func (p *Procedure[T, R]) Query(callback func(Context[T, R]) error) ProcedureHan
 	return func(t IApp, groups ...*echo.Group) {
 		p.ctx.sharedValue = t.Ctx().sharedValue
 
-		t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+		path := t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+
+		t.Spec(func(spec TRPCSpec) TRPCSpec {
+			spec.Procedures = append(spec.Procedures, TRPCSpecProcedure{
+				Path:   path,
+				Type:   TRPCSpecProcedureTypeQuery,
+				Input:  createTypeDescriptor[T](),
+				Output: createTypeDescriptor[R](),
+			})
+
+			return spec
+		})
 	}
 }
 
@@ -65,7 +76,18 @@ func (p *Procedure[T, R]) Mutation(callback func(Context[T, R]) error) Procedure
 	return func(t IApp, groups ...*echo.Group) {
 		p.ctx.sharedValue = t.Ctx().sharedValue
 
-		t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+		path := t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+
+		t.Spec(func(spec TRPCSpec) TRPCSpec {
+			spec.Procedures = append(spec.Procedures, TRPCSpecProcedure{
+				Path:   path,
+				Type:   TRPCSpecProcedureTypeMutation,
+				Input:  createTypeDescriptor[T](),
+				Output: createTypeDescriptor[R](),
+			})
+
+			return spec
+		})
 	}
 }
 

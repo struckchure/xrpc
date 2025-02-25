@@ -26,7 +26,12 @@ type GetPostInput struct {
 }
 
 func main() {
-	t := trpc.InitTRPC()
+	t := trpc.InitTRPC(trpc.InitTRPCConfig{
+		Name:            "TRPC Example",
+		ServerUrl:       "localhost:9090",
+		SpecPath:        "./example/trpc.yaml",
+		AutoGenTRPCSpec: true,
+	})
 
 	t.Use(func(c trpc.Context[any, any]) error {
 		c.Locals("userId", "1290")
