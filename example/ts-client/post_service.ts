@@ -30,8 +30,8 @@ async function PostCreate(data: CreatePostInput): Promise<Post> {
 }
 
 interface GetPostInput {
-  author_id: string;
   id: number;
+  author_id: string;
 }
 
 async function PostGet(data: GetPostInput): Promise<Post> {
