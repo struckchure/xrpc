@@ -119,9 +119,9 @@ func getFieldAlias(field reflect.StructField) string {
 	return parts[0]
 }
 
-// writeFile creates a new file and writes content to it.
+// WriteFile creates a new file and writes content to it.
 // It returns an error if the file cannot be created or written to.
-func writeFile(filename string, content string) error {
+func WriteFile(filename string, content string) error {
 	// Create a new file, or truncate an existing one.
 	file, err := os.Create(filename)
 	if err != nil {

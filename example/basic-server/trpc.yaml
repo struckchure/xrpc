@@ -1,95 +1,95 @@
 name: Post Service
 server_url: http://localhost:9090
 procedures:
-  - path: /post/list/
-    type: Query
-    input:
-      type_name: ListPostInput
-      fields:
-        - name: Skip
-          alias: skip
-          type: int
-          nillable: true
-        - name: Limit
-          alias: limit
-          type: int
-          nillable: true
-      nillable: false
-    output:
-      nillable: false
-      array:
+    - path: /post/list/
+      type: Query
+      input:
+        type_name: ListPostInput
+        fields:
+            - name: Skip
+              alias: skip
+              type: int
+              nillable: true
+            - name: Limit
+              alias: limit
+              type: int
+              nillable: true
+        nillable: false
+      output:
+        nillable: false
+        array:
+            type_name: Post
+            fields:
+                - name: Id
+                  alias: id
+                  type: int
+                  nillable: false
+                - name: Title
+                  alias: title
+                  type: string
+                  nillable: false
+                - name: Content
+                  alias: content
+                  type: string
+                  nillable: false
+            nillable: false
+    - path: /post/create/
+      type: Mutation
+      input:
+        type_name: CreatePostInput
+        fields:
+            - name: Title
+              alias: title
+              type: string
+              nillable: false
+            - name: Content
+              alias: content
+              type: string
+              nillable: false
+        nillable: false
+      output:
         type_name: Post
         fields:
-          - name: Id
-            alias: id
-            type: int
-            nillable: false
-          - name: Title
-            alias: title
-            type: string
-            nillable: false
-          - name: Content
-            alias: content
-            type: string
-            nillable: false
+            - name: Id
+              alias: id
+              type: int
+              nillable: false
+            - name: Title
+              alias: title
+              type: string
+              nillable: false
+            - name: Content
+              alias: content
+              type: string
+              nillable: false
+        nillable: true
+    - path: /post/get/
+      type: Query
+      input:
+        type_name: GetPostInput
+        fields:
+            - name: Id
+              alias: id
+              type: int
+              nillable: true
+            - name: AuthorId
+              alias: author_id
+              type: string
+              nillable: true
         nillable: false
-  - path: /post/create/
-    type: Mutation
-    input:
-      type_name: CreatePostInput
-      fields:
-        - name: Title
-          alias: title
-          type: string
-          nillable: false
-        - name: Content
-          alias: content
-          type: string
-          nillable: false
-      nillable: false
-    output:
-      type_name: Post
-      fields:
-        - name: Id
-          alias: id
-          type: int
-          nillable: false
-        - name: Title
-          alias: title
-          type: string
-          nillable: false
-        - name: Content
-          alias: content
-          type: string
-          nillable: false
-      nillable: true
-  - path: /post/get/
-    type: Query
-    input:
-      type_name: GetPostInput
-      fields:
-        - name: Id
-          alias: id
-          type: int
-          nillable: true
-        - name: AuthorId
-          alias: author_id
-          type: string
-          nillable: true
-      nillable: false
-    output:
-      type_name: Post
-      fields:
-        - name: Id
-          alias: id
-          type: int
-          nillable: false
-        - name: Title
-          alias: title
-          type: string
-          nillable: false
-        - name: Content
-          alias: content
-          type: string
-          nillable: false
-      nillable: true
+      output:
+        type_name: Post
+        fields:
+            - name: Id
+              alias: id
+              type: int
+              nillable: false
+            - name: Title
+              alias: title
+              type: string
+              nillable: false
+            - name: Content
+              alias: content
+              type: string
+              nillable: false
+        nillable: true

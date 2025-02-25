@@ -49,7 +49,7 @@ func (a *App) GenerateSpec() {
 			log.Fatalf("Error marshaling YAML: %v", err)
 		}
 		fmt.Println(a.specPath)
-		err = writeFile(a.specPath, string(yamlData))
+		err = WriteFile(a.specPath, string(yamlData))
 		if err != nil {
 			log.Fatalln(err)
 		}
