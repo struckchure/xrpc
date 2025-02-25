@@ -10,8 +10,8 @@ const (
 type TRPCSpecProcedure struct {
 	Path   string                `yaml:"path"`
 	Type   TRPCSpecProcedureType `yaml:"type"`
-	Input  interface{}           `yaml:"input"`
-	Output interface{}           `yaml:"output"`
+	Input  TypeDescriptor        `yaml:"input"`
+	Output TypeDescriptor        `yaml:"output"`
 }
 
 type TRPCSpec struct {

@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-type TypeDescriptor[T any] struct {
-	TypeName string               `yaml:"type_name,omitempty"`
-	Fields   []FieldDescriptor    `yaml:"fields,omitempty"`
-	Nillable bool                 `yaml:"nillable"`
-	Array    *TypeDescriptor[any] `yaml:"array,omitempty"`
+type TypeDescriptor struct {
+	TypeName string            `yaml:"type_name,omitempty"`
+	Fields   []FieldDescriptor `yaml:"fields,omitempty"`
+	Nillable bool              `yaml:"nillable"`
+	Array    *TypeDescriptor   `yaml:"array,omitempty"`
 }
 
 type FieldDescriptor struct {
@@ -21,7 +21,7 @@ type FieldDescriptor struct {
 	Nillable bool   `yaml:"nillable"`
 }
 
-func createTypeDescriptor[T any]() TypeDescriptor[T] {
+func createTypeDescriptor[T any]() TypeDescriptor {
 	var t T
 	typeOfT := reflect.TypeOf(t)
 
@@ -32,7 +32,7 @@ func createTypeDescriptor[T any]() TypeDescriptor[T] {
 		typeOfT = typeOfT.Elem() // Get the type the pointer points to.
 	}
 
-	descriptor := TypeDescriptor[T]{
+	descriptor := TypeDescriptor{
 		TypeName: typeOfT.Name(),
 		Nillable: isNillable,
 	}
@@ -68,14 +68,14 @@ func createTypeDescriptor[T any]() TypeDescriptor[T] {
 }
 
 // Helper function to make the recursive call work.
-func createTypeDescriptorHelper(typeOfT reflect.Type) TypeDescriptor[any] {
+func createTypeDescriptorHelper(typeOfT reflect.Type) TypeDescriptor {
 	isNillable := typeOfT.Kind() == reflect.Ptr || typeOfT.Kind() == reflect.Interface
 
 	if typeOfT.Kind() == reflect.Ptr {
 		typeOfT = typeOfT.Elem() // Get the type the pointer points to.
 	}
 
-	descriptor := TypeDescriptor[any]{
+	descriptor := TypeDescriptor{
 		TypeName: typeOfT.Name(),
 		Nillable: isNillable,
 	}

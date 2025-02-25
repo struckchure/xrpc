@@ -1,5 +1,5 @@
-name: TRPC Example
-server_url: localhost:9090
+name: Post Service
+server_url: http://localhost:9090
 procedures:
   - path: /post/list/
     type: Query

@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/struckchure/go-trpc"
-)
+import "github.com/struckchure/go-trpc"
 
 type Post struct {
 	Id      int    `json:"id"`
@@ -27,9 +25,9 @@ type GetPostInput struct {
 
 func main() {
 	t := trpc.InitTRPC(trpc.InitTRPCConfig{
-		Name:            "TRPC Example",
-		ServerUrl:       "localhost:9090",
-		SpecPath:        "./example/trpc.yaml",
+		Name:            "Post Service",
+		ServerUrl:       "http://localhost:9090",
+		SpecPath:        "./example/basic-server/trpc.yaml",
 		AutoGenTRPCSpec: true,
 	})
 
