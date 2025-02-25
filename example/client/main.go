@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/samber/lo"
 	"github.com/struckchure/go-trpc"
 	"github.com/struckchure/go-trpc/clients"
 	"gopkg.in/yaml.v3"
@@ -35,15 +36,15 @@ func main() {
 	}
 
 	client := NewPostServiceClient()
-	// postList, err := client.PostList(ListPostInput{
-	// 	Skip:  lo.ToPtr(2),
-	// 	Limit: lo.ToPtr(10),
-	// })
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// fmt.Printf("%#v\n", postList)
+	postList, err := client.PostList(ListPostInput{
+		Skip:  lo.ToPtr(2),
+		Limit: lo.ToPtr(10),
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("%#v\n", postList)
 
 	postCreate, err := client.PostCreate(CreatePostInput{
 		Title:   "OneTwoThreeFourFiveSix",
@@ -55,10 +56,10 @@ func main() {
 	}
 	fmt.Printf("%#v\n", postCreate)
 
-	// postGet, err := client.PostGet(GetPostInput{Id: lo.ToPtr(12), AuthorId: lo.ToPtr("id-1")})
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// fmt.Printf("%#v\n", postGet)
+	postGet, err := client.PostGet(GetPostInput{Id: lo.ToPtr(12), AuthorId: lo.ToPtr("id-1")})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("%#v\n", postGet)
 }
