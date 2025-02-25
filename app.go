@@ -11,6 +11,7 @@ import (
 
 type IApp interface {
 	Spec(modifier func(TRPCSpec) TRPCSpec)
+	GenerateSpec()
 	Server() *echo.Echo
 	Ctx() Context[any, any]
 	Use(...func(Context[any, any]) error) IApp
@@ -39,6 +40,22 @@ func (a *App) Ctx() Context[any, any] {
 
 func (a *App) Spec(modifier func(TRPCSpec) TRPCSpec) {
 	a.spec = modifier(a.spec)
+}
+
+func (a *App) GenerateSpec() {
+	a.Spec(func(t TRPCSpec) TRPCSpec {
+		yamlData, err := yaml.Marshal(&t)
+		if err != nil {
+			log.Fatalf("Error marshaling YAML: %v", err)
+		}
+		fmt.Println(a.specPath)
+		err = writeFile(a.specPath, string(yamlData))
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		return t
+	})
 }
 
 func (a *App) Use(middlewares ...func(Context[any, any]) error) IApp {
@@ -91,19 +108,7 @@ func (a *App) Post(path string, handler func(c echo.Context) error, group ...*ec
 
 func (a *App) Start(port int) error {
 	if a.autoGenSpec {
-		a.Spec(func(t TRPCSpec) TRPCSpec {
-			yamlData, err := yaml.Marshal(&t)
-			if err != nil {
-				log.Fatalf("Error marshaling YAML: %v", err)
-			}
-			fmt.Println(a.specPath)
-			err = writeFile(a.specPath, string(yamlData))
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			return t
-		})
+		a.GenerateSpec()
 	}
 
 	return a.srv.Start(fmt.Sprintf(":%d", port))
