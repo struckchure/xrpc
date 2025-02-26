@@ -14,7 +14,7 @@ type IApp interface {
 	GenerateSpec()
 	Server() *echo.Echo
 	Ctx() Context[any, any]
-	Use(...func(Context[any, any]) error) IApp
+	Use(...ProcedureCallback[any, any]) IApp
 	Router(string, ...func(IApp, ...*echo.Group)) IApp
 	Get(string, func(c echo.Context) error, ...*echo.Group) string
 	Post(string, func(c echo.Context) error, ...*echo.Group) string
@@ -48,7 +48,6 @@ func (a *App) GenerateSpec() {
 		if err != nil {
 			log.Fatalf("Error marshaling YAML: %v", err)
 		}
-		fmt.Println(a.specPath)
 		err = WriteFile(a.specPath, string(yamlData))
 		if err != nil {
 			log.Fatalln(err)
@@ -58,7 +57,7 @@ func (a *App) GenerateSpec() {
 	})
 }
 
-func (a *App) Use(middlewares ...func(Context[any, any]) error) IApp {
+func (a *App) Use(middlewares ...ProcedureCallback[any, any]) IApp {
 	for _, m := range middlewares {
 		a.srv.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {

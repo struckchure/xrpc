@@ -8,18 +8,20 @@ import (
 )
 
 type ProcedureHandler func(IApp, ...*echo.Group)
+type ProcedureCallback[T, R any] func(Context[T, R]) error
 
 type IProcedure[T, R any] interface {
 	Input(*Validator) IProcedure[T, R]
-	Use(...func(Context[T, R]) error) IProcedure[T, R]
-	Query(func(Context[T, R]) error) ProcedureHandler
-	Mutation(func(Context[T, R]) error) ProcedureHandler
+	Use(...ProcedureCallback[T, R]) IProcedure[T, R]
+	Query(ProcedureCallback[T, R]) ProcedureHandler
+	Mutation(ProcedureCallback[T, R]) ProcedureHandler
 }
 
 type Procedure[T, R any] struct {
-	name      string
-	validator *Validator
-	ctx       Context[T, R]
+	name        string
+	validator   *Validator
+	ctx         Context[T, R]
+	middlewares []ProcedureCallback[T, R]
 }
 
 func (p *Procedure[T, R]) Input(v *Validator) IProcedure[T, R] {
@@ -30,30 +32,61 @@ func (p *Procedure[T, R]) Input(v *Validator) IProcedure[T, R] {
 	return p
 }
 
-func (p *Procedure[T, R]) Use(middlewares ...func(Context[T, R]) error) IProcedure[T, R] {
+func (p *Procedure[T, R]) Use(middlewares ...ProcedureCallback[T, R]) IProcedure[T, R] {
+	p.middlewares = append(p.middlewares, middlewares...)
+
 	return p
 }
 
-func (p *Procedure[T, R]) handler(c echo.Context, callback func(Context[T, R]) error) error {
+func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, R]) error {
 	var input T
 
 	if p.validator != nil {
 		if err := c.Bind(&input); err != nil {
-			return c.JSON(http.StatusBadRequest, echo.Map{"error": err})
+			return c.JSON(http.StatusBadRequest, echo.Map{"detail": err})
 		}
 
 		if err := p.validator.Validate(input); err != nil {
-			return c.JSON(http.StatusBadRequest, err)
+			return c.JSON(http.StatusBadRequest, echo.Map{"detail": err})
 		}
 	}
 
+	var middlewareErr error = nil
+	proceedToNext := false
+
 	p.ctx.ec = c
 	p.ctx.Input = input
+	p.ctx.next = func() error {
+		proceedToNext = true
+		return nil
+	}
+
+	for _, middleware := range p.middlewares {
+		if middlewareErr != nil && !proceedToNext {
+			break
+		}
+
+		err := middleware(p.ctx)
+		if err != nil {
+			middlewareErr = err
+		}
+
+		proceedToNext = false
+	}
+
+	if middlewareErr != nil {
+		switch err := middlewareErr.(type) {
+		case *TRPCError:
+			return c.JSON(err.Code, echo.Map{"detail": err.Detail})
+		default:
+			return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
+		}
+	}
 
 	return callback(p.ctx)
 }
 
-func (p *Procedure[T, R]) Query(callback func(Context[T, R]) error) ProcedureHandler {
+func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) ProcedureHandler {
 	return func(t IApp, groups ...*echo.Group) {
 		p.ctx.sharedValue = t.Ctx().sharedValue
 
@@ -72,7 +105,7 @@ func (p *Procedure[T, R]) Query(callback func(Context[T, R]) error) ProcedureHan
 	}
 }
 
-func (p *Procedure[T, R]) Mutation(callback func(Context[T, R]) error) ProcedureHandler {
+func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) ProcedureHandler {
 	return func(t IApp, groups ...*echo.Group) {
 		p.ctx.sharedValue = t.Ctx().sharedValue
 

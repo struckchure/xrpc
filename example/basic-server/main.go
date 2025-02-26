@@ -1,6 +1,10 @@
 package main
 
-import "github.com/struckchure/go-trpc"
+import (
+	"fmt"
+
+	"github.com/struckchure/go-trpc"
+)
 
 type Post struct {
 	Id      int    `json:"id"`
@@ -39,11 +43,27 @@ func main() {
 
 	t.Router("post",
 		trpc.NewProcedure[ListPostInput, []Post]("list").
+			Use(
+				func(c trpc.Context[ListPostInput, []Post]) error {
+					fmt.Println("Middleware 1")
+
+					return c.Next()
+					// return &trpc.TRPCError{Code: 401, Detail: "something went wrong"}
+				},
+				func(c trpc.Context[ListPostInput, []Post]) error {
+					fmt.Println("Middleware 2")
+
+					c.Locals("m2", true)
+
+					return c.Next()
+				},
+			).
 			Input(trpc.NewValidator().
 				Field("Skip", trpc.Number().Min(0).Required()).
 				Field("Limit", trpc.Number().Max(10)),
 			).
 			Query(func(c trpc.Context[ListPostInput, []Post]) error {
+				fmt.Println(c.Locals("m2"))
 				return c.Json(200, []Post{})
 			}),
 
