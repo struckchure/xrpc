@@ -1,4 +1,4 @@
-package trpc
+package xrpc
 
 import (
 	"fmt"
@@ -81,7 +81,7 @@ func createTypeDescriptorHelper(typeOfT reflect.Type) TypeDescriptor {
 	}
 
 	if typeOfT.Kind() == reflect.Struct {
-		for i := 0; i < typeOfT.NumField(); i++ {
+		for i := range typeOfT.NumField() {
 			field := typeOfT.Field(i)
 			fieldType := field.Type
 

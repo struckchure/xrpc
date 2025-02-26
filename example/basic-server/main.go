@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/struckchure/go-trpc"
+	"github.com/struckchure/xrpc"
 )
 
 type Post struct {
@@ -28,29 +28,29 @@ type GetPostInput struct {
 }
 
 func main() {
-	t := trpc.InitTRPC(trpc.InitTRPCConfig{
+	t := xrpc.NewXRPC(xrpc.XRPCConfig{
 		Name:            "Post Service",
 		ServerUrl:       "http://localhost:9090",
-		SpecPath:        "./example/basic-server/trpc.yaml",
+		SpecPath:        "./example/basic-server/xrpc.yaml",
 		AutoGenTRPCSpec: true,
 	})
 
-	t.Use(func(c trpc.Context[any, any]) error {
+	t.Use(func(c xrpc.Context[any, any]) error {
 		c.Locals("userId", "1290")
 
 		return c.Next()
 	})
 
 	t.Router("post",
-		trpc.NewProcedure[ListPostInput, []Post]("list").
+		xrpc.NewProcedure[ListPostInput, []Post]("list").
 			Use(
-				func(c trpc.Context[ListPostInput, []Post]) error {
+				func(c xrpc.Context[ListPostInput, []Post]) error {
 					fmt.Println("Middleware 1")
 
 					return c.Next()
-					// return &trpc.TRPCError{Code: 401, Detail: "something went wrong"}
+					// return &xrpc.TRPCError{Code: 401, Detail: "something went wrong"}
 				},
-				func(c trpc.Context[ListPostInput, []Post]) error {
+				func(c xrpc.Context[ListPostInput, []Post]) error {
 					fmt.Println("Middleware 2")
 
 					c.Locals("m2", true)
@@ -58,30 +58,30 @@ func main() {
 					return c.Next()
 				},
 			).
-			Input(trpc.NewValidator().
-				Field("Skip", trpc.Number().Min(0).Required()).
-				Field("Limit", trpc.Number().Max(10)),
+			Input(xrpc.NewValidator().
+				Field("Skip", xrpc.Number().Min(0).Required()).
+				Field("Limit", xrpc.Number().Max(10)),
 			).
-			Query(func(c trpc.Context[ListPostInput, []Post]) error {
+			Query(func(c xrpc.Context[ListPostInput, []Post]) error {
 				fmt.Println(c.Locals("m2"))
 				return c.Json(200, []Post{})
 			}),
 
-		trpc.NewProcedure[CreatePostInput, *Post]("create").
-			Input(trpc.NewValidator().
-				Field("Title", trpc.String().MinLength(10)).
-				Field("Content", trpc.String().MinLength(10)),
+		xrpc.NewProcedure[CreatePostInput, *Post]("create").
+			Input(xrpc.NewValidator().
+				Field("Title", xrpc.String().MinLength(10)).
+				Field("Content", xrpc.String().MinLength(10)),
 			).
-			Mutation(func(c trpc.Context[CreatePostInput, *Post]) error {
+			Mutation(func(c xrpc.Context[CreatePostInput, *Post]) error {
 				return c.Json(201, &Post{})
 			}),
 
-		trpc.NewProcedure[GetPostInput, *Post]("get").
-			Input(trpc.NewValidator().
-				Field("Id", trpc.Number().Required()).
-				Field("AuthorId", trpc.String().Required()),
+		xrpc.NewProcedure[GetPostInput, *Post]("get").
+			Input(xrpc.NewValidator().
+				Field("Id", xrpc.Number().Required()).
+				Field("AuthorId", xrpc.String().Required()),
 			).
-			Query(func(c trpc.Context[GetPostInput, *Post]) error {
+			Query(func(c xrpc.Context[GetPostInput, *Post]) error {
 				return c.Json(200, &Post{Title: c.Locals("userId").(string)})
 			}),
 	)

@@ -2,8 +2,8 @@ package clients
 
 import (
 	"github.com/samber/lo"
-	"github.com/struckchure/go-trpc"
-	"github.com/struckchure/go-trpc/internals"
+	"github.com/struckchure/xrpc"
+	"github.com/struckchure/xrpc/internals"
 )
 
 var goToTSType = map[string]string{
@@ -25,7 +25,7 @@ var goToTSType = map[string]string{
 }
 
 // Convert a Go type to TypeScript type, handling arrays and maps
-func convertGoTypeToTS(goType trpc.TypeDescriptor) string {
+func convertGoTypeToTS(goType xrpc.TypeDescriptor) string {
 	if goType.Array != nil {
 		return convertGoTypeToTS(*goType.Array) + "[]"
 	}
@@ -37,7 +37,7 @@ func convertGoTypeToTS(goType trpc.TypeDescriptor) string {
 }
 
 type TypeScriptClientConfig struct {
-	Spec     trpc.TRPCSpec
+	Spec     xrpc.TRPCSpec
 	Output   string
 	PostHook func()
 }
@@ -53,9 +53,9 @@ func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
 		inputFields := map[string]string{}
 		for _, field := range procedure.Input.Fields {
 			if field.Nillable {
-				inputFields[field.Alias+"?"] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+				inputFields[field.Alias+"?"] = convertGoTypeToTS(xrpc.TypeDescriptor{TypeName: field.Type})
 			} else {
-				inputFields[field.Alias] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+				inputFields[field.Alias] = convertGoTypeToTS(xrpc.TypeDescriptor{TypeName: field.Type})
 			}
 		}
 
@@ -74,9 +74,9 @@ func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
 			outputFields := map[string]string{}
 			for _, field := range procedure.Output.Fields {
 				if field.Nillable {
-					outputFields[field.Alias+"?"] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+					outputFields[field.Alias+"?"] = convertGoTypeToTS(xrpc.TypeDescriptor{TypeName: field.Type})
 				} else {
-					outputFields[field.Alias] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+					outputFields[field.Alias] = convertGoTypeToTS(xrpc.TypeDescriptor{TypeName: field.Type})
 				}
 			}
 			if procedure.Output.TypeName != "" {
@@ -89,7 +89,7 @@ func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
 		var params map[string]string
 		var body []string
 
-		if procedure.Type == trpc.TRPCSpecProcedureTypeQuery {
+		if procedure.Type == xrpc.XRPCSpecProcedureTypeQuery {
 			body = []string{
 				"const queryParams = new URLSearchParams(data as unknown as Record<string, any>).toString();",
 				"const response = await fetch(`" + cfg.Spec.ServerUrl + procedure.Path + "?${queryParams}`);",
@@ -116,7 +116,7 @@ func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
 		})
 	}
 
-	err := trpc.WriteFile(cfg.Output, file.Render())
+	err := xrpc.WriteFile(cfg.Output, file.Render())
 	if err != nil {
 		return err
 	}

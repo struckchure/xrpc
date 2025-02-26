@@ -1,4 +1,4 @@
-package trpc
+package xrpc
 
 import (
 	"errors"

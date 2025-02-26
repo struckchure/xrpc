@@ -1,4 +1,4 @@
-package trpc
+package xrpc
 
 import (
 	"net/http"
@@ -76,7 +76,7 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, 
 
 	if middlewareErr != nil {
 		switch err := middlewareErr.(type) {
-		case *TRPCError:
+		case *XRPCError:
 			return c.JSON(err.Code, echo.Map{"detail": err.Detail})
 		default:
 			return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
@@ -93,9 +93,9 @@ func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) ProcedureHandl
 		path := t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
 
 		t.Spec(func(spec TRPCSpec) TRPCSpec {
-			spec.Procedures = append(spec.Procedures, TRPCSpecProcedure{
+			spec.Procedures = append(spec.Procedures, XRPCSpecProcedure{
 				Path:   path,
-				Type:   TRPCSpecProcedureTypeQuery,
+				Type:   XRPCSpecProcedureTypeQuery,
 				Input:  createTypeDescriptor[T](),
 				Output: createTypeDescriptor[R](),
 			})
@@ -112,9 +112,9 @@ func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) ProcedureHa
 		path := t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
 
 		t.Spec(func(spec TRPCSpec) TRPCSpec {
-			spec.Procedures = append(spec.Procedures, TRPCSpecProcedure{
+			spec.Procedures = append(spec.Procedures, XRPCSpecProcedure{
 				Path:   path,
-				Type:   TRPCSpecProcedureTypeMutation,
+				Type:   XRPCSpecProcedureTypeMutation,
 				Input:  createTypeDescriptor[T](),
 				Output: createTypeDescriptor[R](),
 			})

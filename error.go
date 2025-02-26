@@ -1,15 +1,15 @@
-package trpc
+package xrpc
 
 import (
 	"encoding/json"
 )
 
-type TRPCError struct {
+type XRPCError struct {
 	Code   int `json:"-"`
 	Detail any `json:"detail"`
 }
 
-func (e *TRPCError) Error() string {
+func (e *XRPCError) Error() string {
 	out, err := json.Marshal(e)
 	if err != nil {
 		return ""

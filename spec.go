@@ -1,15 +1,15 @@
-package trpc
+package xrpc
 
-type TRPCSpecProcedureType string
+type XRPCSpecProcedureType string
 
 const (
-	TRPCSpecProcedureTypeQuery    TRPCSpecProcedureType = "Query"
-	TRPCSpecProcedureTypeMutation TRPCSpecProcedureType = "Mutation"
+	XRPCSpecProcedureTypeQuery    XRPCSpecProcedureType = "Query"
+	XRPCSpecProcedureTypeMutation XRPCSpecProcedureType = "Mutation"
 )
 
-type TRPCSpecProcedure struct {
+type XRPCSpecProcedure struct {
 	Path   string                `yaml:"path"`
-	Type   TRPCSpecProcedureType `yaml:"type"`
+	Type   XRPCSpecProcedureType `yaml:"type"`
 	Input  TypeDescriptor        `yaml:"input"`
 	Output TypeDescriptor        `yaml:"output"`
 }
@@ -17,5 +17,5 @@ type TRPCSpecProcedure struct {
 type TRPCSpec struct {
 	Name       string              `yaml:"name"`
 	ServerUrl  string              `yaml:"server_url"`
-	Procedures []TRPCSpecProcedure `yaml:"procedures"`
+	Procedures []XRPCSpecProcedure `yaml:"procedures"`
 }

@@ -1,4 +1,4 @@
-package trpc
+package xrpc
 
 import (
 	"github.com/labstack/echo/v4"
@@ -8,7 +8,7 @@ import (
 type Context[T, R any] struct {
 	ec          echo.Context
 	next        func() error
-	sharedValue map[string]interface{}
+	sharedValue map[string]any
 
 	Input T
 }

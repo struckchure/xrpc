@@ -5,15 +5,15 @@ import (
 	"os"
 
 	"github.com/samber/lo"
-	"github.com/struckchure/go-trpc"
-	"github.com/struckchure/go-trpc/clients"
+	"github.com/struckchure/xrpc"
+	"github.com/struckchure/xrpc/clients"
 	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	spec := trpc.TRPCSpec{}
+	spec := xrpc.TRPCSpec{}
 
-	data, err := os.ReadFile("./example/basic-server/trpc.yaml")
+	data, err := os.ReadFile("./example/basic-server/xrpc.yaml")
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -1,4 +1,4 @@
-module github.com/struckchure/go-trpc
+module github.com/struckchure/xrpc
 
 go 1.23.4
 

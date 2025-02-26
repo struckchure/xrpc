@@ -1,6 +1,6 @@
 # Go tRPC
 
-This project was inspired by [TRPC](https://trpc.io) and [Zod](https://zod.dev). It provides a simple and flexible way to define and validate input for HTTP procedures using [Echo](https://echo.labstack.com) as the HTTP server.
+This project was inspired by [TRPC](https://xrpc.io) and [Zod](https://zod.dev). It provides a simple and flexible way to define and validate input for HTTP procedures using [Echo](https://echo.labstack.com) as the HTTP server.
 
 ## Features
 
@@ -13,7 +13,7 @@ This project was inspired by [TRPC](https://trpc.io) and [Zod](https://zod.dev).
 To install the library, run:
 
 ```bash
-go get github.com/struckchure/go-trpc
+go get github.com/struckchure/xrpc
 ```
 
 ## Usage
@@ -51,32 +51,32 @@ Create procedures for listing posts, creating a post, and getting a post:
 
 ```go
 func main() {
-  t := trpc.InitTRPC()
+  t := xrpc.InitTRPC()
 
-  listPostsProcedure := trpc.NewProcedure[ListPostInput, []Post]("list").
-    Input(trpc.NewValidator().
-      Field("Skip", trpc.Number().Min(0).Required()).
-      Field("Limit", trpc.Number().Max(10)),
+  listPostsProcedure := xrpc.NewProcedure[ListPostInput, []Post]("list").
+    Input(xrpc.NewValidator().
+      Field("Skip", xrpc.Number().Min(0).Required()).
+      Field("Limit", xrpc.Number().Max(10)),
     ).
-    Query(func(c trpc.Context[ListPostInput, []Post]) error {
+    Query(func(c xrpc.Context[ListPostInput, []Post]) error {
       return c.Json(200, []Post{})
     })
 
-  createPostProcedure := trpc.NewProcedure[CreatePostInput, *Post]("create").
-    Input(trpc.NewValidator().
-      Field("Title", trpc.String().MinLength(10)).
-      Field("Content", trpc.String().MinLength(10)),
+  createPostProcedure := xrpc.NewProcedure[CreatePostInput, *Post]("create").
+    Input(xrpc.NewValidator().
+      Field("Title", xrpc.String().MinLength(10)).
+      Field("Content", xrpc.String().MinLength(10)),
     ).
-    Mutation(func(c trpc.Context[CreatePostInput, *Post]) error {
+    Mutation(func(c xrpc.Context[CreatePostInput, *Post]) error {
       return c.Json(201, &Post{})
     })
 
-  getPostProcedure := trpc.NewProcedure[GetPostInput, *Post]("get").
-    Input(trpc.NewValidator().
-      Field("Id", trpc.Number().Required()).
-      Field("AuthorId", trpc.String()),
+  getPostProcedure := xrpc.NewProcedure[GetPostInput, *Post]("get").
+    Input(xrpc.NewValidator().
+      Field("Id", xrpc.Number().Required()).
+      Field("AuthorId", xrpc.String()),
     ).
-    Query(func(c trpc.Context[GetPostInput, *Post]) error {
+    Query(func(c xrpc.Context[GetPostInput, *Post]) error {
       return c.Json(200, &Post{})
     })
 
@@ -99,10 +99,10 @@ The custom validation library provides a fluent API for defining validation rule
 ### Example Usage
 
 ```go
-validator := trpc.NewValidator().
-  Field("Name", trpc.String().MinLength(3).MaxLength(50)).
-  Field("Email", trpc.String().Email()).
-  Field("Age", trpc.Number().Min(18).Max(65))
+validator := xrpc.NewValidator().
+  Field("Name", xrpc.String().MinLength(3).MaxLength(50)).
+  Field("Email", xrpc.String().Email()).
+  Field("Age", xrpc.Number().Min(18).Max(65))
 
 err := validator.Validate(input)
 if err != nil {
@@ -116,6 +116,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Acknowledgements
 
-- [TRPC](https://trpc.io)
+- [TRPC](https://xrpc.io)
 - [Zod](https://zod.dev)
 - [Echo](https://echo.labstack.com)

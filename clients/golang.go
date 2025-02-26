@@ -5,11 +5,11 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/samber/lo"
-	"github.com/struckchure/go-trpc"
+	"github.com/struckchure/xrpc"
 )
 
 type GolangClientConfig struct {
-	Spec     trpc.TRPCSpec
+	Spec     xrpc.TRPCSpec
 	PkgName  string
 	Output   string
 	PostHook func()
@@ -70,10 +70,10 @@ func GenerateGolangClient(cfg GolangClientConfig) error {
 
 	types := []string{}
 
-	getFields := func(fields []trpc.FieldDescriptor) []jen.Code {
+	getFields := func(fields []xrpc.FieldDescriptor) []jen.Code {
 		return lo.Map(
 			fields,
-			func(field trpc.FieldDescriptor, _ int) jen.Code {
+			func(field xrpc.FieldDescriptor, _ int) jen.Code {
 				var stmt *jen.Statement
 				if field.Nillable {
 					stmt = jen.Id(field.Name).Op("*").Id(field.Type)
@@ -89,7 +89,7 @@ func GenerateGolangClient(cfg GolangClientConfig) error {
 			},
 		)
 	}
-	generateReturnStatement := func(output trpc.TypeDescriptor, outputTypeName string) *jen.Statement {
+	generateReturnStatement := func(output xrpc.TypeDescriptor, outputTypeName string) *jen.Statement {
 		return jen.Return().List(
 			jen.Id("resp").Dot("Result").Call().Assert(
 				lo.
@@ -140,7 +140,7 @@ func GenerateGolangClient(cfg GolangClientConfig) error {
 			_method.Params(jen.Op("*").Id(outputTypeName), jen.Error())
 		}
 
-		if procedure.Type == trpc.TRPCSpecProcedureTypeQuery {
+		if procedure.Type == xrpc.XRPCSpecProcedureTypeQuery {
 			_method.Block(
 				jen.List(
 					jen.Id("queryParams"),
@@ -174,7 +174,7 @@ func GenerateGolangClient(cfg GolangClientConfig) error {
 				),
 				generateReturnStatement(output, outputTypeName),
 			)
-		} else if procedure.Type == trpc.TRPCSpecProcedureTypeMutation {
+		} else if procedure.Type == xrpc.XRPCSpecProcedureTypeMutation {
 			_method.Block(
 				jen.List(
 					jen.Id("resp"),

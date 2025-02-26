@@ -1,4 +1,4 @@
-package trpc
+package xrpc
 
 import (
 	"fmt"
@@ -113,19 +113,19 @@ func (a *App) Start(port int) error {
 	return a.srv.Start(fmt.Sprintf(":%d", port))
 }
 
-type InitTRPCConfig struct {
+type XRPCConfig struct {
 	Name            string
 	ServerUrl       string
 	AutoGenTRPCSpec bool
 	SpecPath        string
 }
 
-func InitTRPC(cfg ...InitTRPCConfig) IApp {
-	_cfg := InitTRPCConfig{
-		Name:            "TRPC Spec",
+func NewXRPC(cfg ...XRPCConfig) IApp {
+	_cfg := XRPCConfig{
+		Name:            "xRPC Spec",
 		ServerUrl:       "localhost:9090",
 		AutoGenTRPCSpec: true,
-		SpecPath:        "trpc.yaml",
+		SpecPath:        "xrpc.yaml",
 	}
 
 	if len(cfg) > 0 {
