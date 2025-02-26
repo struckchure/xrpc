@@ -23,12 +23,17 @@ export default defineConfig({
         items: [
           { text: "Getting Started", link: "/getting-started" },
           { text: "Installation", link: "/installation" },
-          { text: "Server", link: "/server" },
+          {
+            text: "Server",
+            link: "/server",
+            items: [
+              { text: "Middleware", link: "/middleware" },
+              { text: "Error Handling", link: "/error-handling" },
+              { text: "Logging", link: "/logging" },
+              { text: "Testing", link: "/testing" },
+            ],
+          },
           { text: "Client", link: "/client" },
-          { text: "Middleware", link: "/middleware" },
-          { text: "Error Handling", link: "/error-handling" },
-          { text: "Logging", link: "/logging" },
-          { text: "Testing", link: "/testing" },
           { text: "Benchmarks", link: "/benchmarks" },
           { text: "FAQ", link: "/faq" },
         ],
