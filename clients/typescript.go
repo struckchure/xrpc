@@ -52,7 +52,11 @@ func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
 		inputTypeName := lo.PascalCase(procedure.Input.TypeName)
 		inputFields := map[string]string{}
 		for _, field := range procedure.Input.Fields {
-			inputFields[field.Alias] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+			if field.Nillable {
+				inputFields[field.Alias+"?"] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+			} else {
+				inputFields[field.Alias] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+			}
 		}
 
 		if _, exists := types[inputTypeName]; !exists {
@@ -69,7 +73,11 @@ func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
 		if _, exists := types[outputTypeName]; !exists {
 			outputFields := map[string]string{}
 			for _, field := range procedure.Output.Fields {
-				outputFields[field.Alias] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+				if field.Nillable {
+					outputFields[field.Alias+"?"] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+				} else {
+					outputFields[field.Alias] = convertGoTypeToTS(trpc.TypeDescriptor{TypeName: field.Type})
+				}
 			}
 			if procedure.Output.TypeName != "" {
 				file.AddNode(&internals.TSInterface{Name: lo.PascalCase(procedure.Output.TypeName), Fields: outputFields})

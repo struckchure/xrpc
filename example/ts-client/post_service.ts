@@ -1,6 +1,6 @@
 interface ListPostInput {
-  skip: number;
-  limit: number;
+  skip?: number;
+  limit?: number;
 }
 
 async function PostList(data: ListPostInput): Promise<Post[]> {
@@ -30,8 +30,8 @@ async function PostCreate(data: CreatePostInput): Promise<Post> {
 }
 
 interface GetPostInput {
-  id: number;
-  author_id: string;
+  id?: number;
+  author_id?: string;
 }
 
 async function PostGet(data: GetPostInput): Promise<Post> {
