@@ -1,6 +1,6 @@
-# Go tRPC
+# xRPC
 
-This project was inspired by [TRPC](https://xrpc.io) and [Zod](https://zod.dev). It provides a simple and flexible way to define and validate input for HTTP procedures using [Echo](https://echo.labstack.com) as the HTTP server.
+This project was inspired by [TRPC](https://trpc.io) and [Zod](https://zod.dev). It provides a simple and flexible way to define and validate input for HTTP procedures using [Echo](https://echo.labstack.com) as the HTTP server.
 
 ## Features
 
