@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/0c323b93-3a5f-49c4-9096-c939d6b5648d" />
+  <img src="./images/logo-w-text.png" width="100px" />
 </p>
 
 # xRPC
