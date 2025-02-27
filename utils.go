@@ -25,6 +25,14 @@ func createTypeDescriptor[T any]() TypeDescriptor {
 	var t T
 	typeOfT := reflect.TypeOf(t)
 
+	if typeOfT == nil {
+		// Handle nil case (e.g., return a default or error)
+		return TypeDescriptor{
+			TypeName: "nil",
+			Nillable: true,
+		}
+	}
+
 	// Dereference pointer if it is a pointer
 	isNillable := typeOfT.Kind() == reflect.Ptr || typeOfT.Kind() == reflect.Interface
 
