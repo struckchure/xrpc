@@ -2,6 +2,7 @@ package xrpc
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/samber/do"
 	"github.com/samber/lo"
 )
 
@@ -10,7 +11,8 @@ type Context[T, R any] struct {
 	next        func() error
 	sharedValue map[string]any
 
-	Input T
+	Injector *do.Injector
+	Input    T
 }
 
 func (c *Context[T, R]) Json(status int, body R) error {

@@ -9,6 +9,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/samber/do v1.6.0
+
 require (
 	github.com/dave/jennifer v1.7.1
 	github.com/labstack/gommon v0.4.2 // indirect

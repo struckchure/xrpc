@@ -3,29 +3,9 @@ package main
 import (
 	"fmt"
 
+	"github.com/samber/do"
 	"github.com/struckchure/xrpc"
 )
-
-type Post struct {
-	Id      int    `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-}
-
-type ListPostInput struct {
-	Skip  *int `query:"skip" json:"skip"`
-	Limit *int `query:"limit" json:"limit"`
-}
-
-type CreatePostInput struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-}
-
-type GetPostInput struct {
-	Id       *int    `query:"id" json:"id"`
-	AuthorId *string `query:"author_id" json:"author_id"`
-}
 
 func main() {
 	t := xrpc.NewXRPC(xrpc.XRPCConfig{
@@ -34,6 +14,9 @@ func main() {
 		SpecPath:        "./example/basic-server/xrpc.yaml",
 		AutoGenTRPCSpec: true,
 	})
+
+	do.Provide(t.Injector(), NewCarService)
+	do.Provide(t.Injector(), NewEngineService)
 
 	t.Use(func(c xrpc.Context[any, any]) error {
 		c.Locals("userId", "1290")
@@ -64,6 +47,9 @@ func main() {
 			).
 			Query(func(c xrpc.Context[ListPostInput, []Post]) error {
 				fmt.Println(c.Locals("m2"))
+				carService := do.MustInvoke[*CarService](c.Injector)
+				carService.Start()
+
 				return c.Json(200, []Post{})
 			}),
 

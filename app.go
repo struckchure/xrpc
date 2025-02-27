@@ -6,10 +6,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/samber/do"
 	"gopkg.in/yaml.v3"
 )
 
 type IApp interface {
+	Injector() *do.Injector
 	Spec(modifier func(TRPCSpec) TRPCSpec)
 	GenerateSpec()
 	Server() *echo.Echo
@@ -25,9 +27,13 @@ type App struct {
 	spec        TRPCSpec
 	autoGenSpec bool
 	specPath    string
+	injector    *do.Injector
+	srv         *echo.Echo
+	ctx         Context[any, any]
+}
 
-	srv *echo.Echo
-	ctx Context[any, any]
+func (a *App) Injector() *do.Injector {
+	return a.injector
 }
 
 func (a *App) Server() *echo.Echo {
@@ -139,6 +145,8 @@ func NewXRPC(cfg ...XRPCConfig) IApp {
 		Format: "${method} ${uri} - ${status} ${latency_human}\n",
 	}))
 
+	i := do.New()
+
 	return &App{
 		spec: TRPCSpec{
 			Name:      _cfg.Name,
@@ -146,8 +154,11 @@ func NewXRPC(cfg ...XRPCConfig) IApp {
 		},
 		autoGenSpec: _cfg.AutoGenTRPCSpec,
 		specPath:    _cfg.SpecPath,
-
-		srv: srv,
-		ctx: Context[any, any]{sharedValue: map[string]interface{}{}},
+		injector:    i,
+		srv:         srv,
+		ctx: Context[any, any]{
+			sharedValue: map[string]any{},
+			Injector:    i,
+		},
 	}
 }
