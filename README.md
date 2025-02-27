@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/f491cd2b-f9c7-47ef-9ed5-03d9634fa928" />
+  <img src="https://github.com/user-attachments/assets/0c323b93-3a5f-49c4-9096-c939d6b5648d" />
 </p>
 
 # xRPC
