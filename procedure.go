@@ -88,6 +88,7 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, 
 
 func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) ProcedureHandler {
 	return func(t IApp, groups ...*echo.Group) {
+		p.ctx.Injector = t.Ctx().Injector
 		p.ctx.sharedValue = t.Ctx().sharedValue
 
 		path := t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
@@ -107,6 +108,7 @@ func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) ProcedureHandl
 
 func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) ProcedureHandler {
 	return func(t IApp, groups ...*echo.Group) {
+		p.ctx.Injector = t.Ctx().Injector
 		p.ctx.sharedValue = t.Ctx().sharedValue
 
 		path := t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
