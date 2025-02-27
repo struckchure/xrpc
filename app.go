@@ -129,7 +129,7 @@ type XRPCConfig struct {
 func NewXRPC(cfg ...XRPCConfig) IApp {
 	_cfg := XRPCConfig{
 		Name:            "xRPC Spec",
-		ServerUrl:       "localhost:9090",
+		ServerUrl:       "http://localhost:9090",
 		AutoGenTRPCSpec: true,
 		SpecPath:        "xrpc.yaml",
 	}
