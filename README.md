@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f491cd2b-f9c7-47ef-9ed5-03d9634fa928" />
+</p>
+
 # xRPC
 
 This project was inspired by [TRPC](https://trpc.io) and [Zod](https://zod.dev). It provides a simple and flexible way to define and validate input for HTTP procedures using [Echo](https://echo.labstack.com) as the HTTP server.
