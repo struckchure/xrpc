@@ -5,6 +5,7 @@ import (
 
 	"github.com/samber/do"
 	"github.com/struckchure/xrpc"
+	"github.com/struckchure/xrpc/validation"
 )
 
 func main() {
@@ -41,9 +42,9 @@ func main() {
 					return c.Next()
 				},
 			).
-			Input(xrpc.NewValidator().
-				Field("Skip", xrpc.Number().Min(0).Required()).
-				Field("Limit", xrpc.Number().Max(10)),
+			Input(validation.NewValidator().
+				Field("Skip", validation.Int().Min(0).Required()).
+				Field("Limit", validation.Int().Max(10)),
 			).
 			Query(func(c xrpc.Context[ListPostInput, []Post]) error {
 				fmt.Println(c.Locals("m2"))
@@ -54,18 +55,18 @@ func main() {
 			}),
 
 		xrpc.NewProcedure[CreatePostInput, *Post]("create").
-			Input(xrpc.NewValidator().
-				Field("Title", xrpc.String().MinLength(10)).
-				Field("Content", xrpc.String().MinLength(10)),
+			Input(validation.NewValidator().
+				Field("Title", validation.String().MinLength(10)).
+				Field("Content", validation.String().MinLength(10)),
 			).
 			Mutation(func(c xrpc.Context[CreatePostInput, *Post]) error {
 				return c.Json(201, &Post{})
 			}),
 
 		xrpc.NewProcedure[GetPostInput, *Post]("get").
-			Input(xrpc.NewValidator().
-				Field("Id", xrpc.Number().Required()).
-				Field("AuthorId", xrpc.String().Required()),
+			Input(validation.NewValidator().
+				Field("Id", validation.Int().Required()).
+				Field("AuthorId", validation.String().Required()),
 			).
 			Query(func(c xrpc.Context[GetPostInput, *Post]) error {
 				return c.Json(200, &Post{Title: c.Locals("userId").(string)})

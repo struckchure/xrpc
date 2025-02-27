@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/struckchure/xrpc/validation"
 )
 
 type ProcedureHandler func(IApp, ...*echo.Group)
 type ProcedureCallback[T, R any] func(Context[T, R]) error
 
 type IProcedure[T, R any] interface {
-	Input(*Validator) IProcedure[T, R]
+	Input(*validation.Validator) IProcedure[T, R]
 	Use(...ProcedureCallback[T, R]) IProcedure[T, R]
 	Query(ProcedureCallback[T, R]) ProcedureHandler
 	Mutation(ProcedureCallback[T, R]) ProcedureHandler
@@ -19,12 +20,12 @@ type IProcedure[T, R any] interface {
 
 type Procedure[T, R any] struct {
 	name        string
-	validator   *Validator
+	validator   *validation.Validator
 	ctx         Context[T, R]
 	middlewares []ProcedureCallback[T, R]
 }
 
-func (p *Procedure[T, R]) Input(v *Validator) IProcedure[T, R] {
+func (p *Procedure[T, R]) Input(v *validation.Validator) IProcedure[T, R] {
 	if v != nil {
 		p.validator = v
 	}
