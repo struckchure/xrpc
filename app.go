@@ -15,7 +15,8 @@ type IApp interface {
 	Spec(modifier func(TRPCSpec) TRPCSpec)
 	GenerateSpec()
 	Server() *echo.Echo
-	Ctx() Context[any, any]
+	Ctx(...func(Context[any, any]) Context[any, any]) Context[any, any]
+	Middlewares() []ProcedureCallback[any, any]
 	Use(...ProcedureCallback[any, any]) IApp
 	Router(string, ...func(IApp, ...*echo.Group)) IApp
 	Get(string, func(c echo.Context) error, ...*echo.Group) string
@@ -30,6 +31,7 @@ type App struct {
 	injector    *do.Injector
 	srv         *echo.Echo
 	ctx         Context[any, any]
+	middlewares []ProcedureCallback[any, any]
 }
 
 func (a *App) Injector() *do.Injector {
@@ -40,7 +42,11 @@ func (a *App) Server() *echo.Echo {
 	return a.srv
 }
 
-func (a *App) Ctx() Context[any, any] {
+func (a *App) Ctx(modifiers ...func(Context[any, any]) Context[any, any]) Context[any, any] {
+	for _, modifier := range modifiers {
+		a.ctx = modifier(a.ctx)
+	}
+
 	return a.ctx
 }
 
@@ -63,28 +69,6 @@ func (a *App) GenerateSpec() {
 	})
 }
 
-func (a *App) Use(middlewares ...ProcedureCallback[any, any]) IApp {
-	for _, m := range middlewares {
-		a.srv.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-			return func(c echo.Context) error {
-				a.ctx.ec = c
-				a.ctx.next = func() error {
-					return next(c)
-				}
-
-				err := m(a.ctx)
-				if err != nil {
-					return err
-				}
-
-				return nil
-			}
-		})
-	}
-
-	return a
-}
-
 func (a *App) Router(path string, procedures ...func(IApp, ...*echo.Group)) IApp {
 	group := a.srv.Group(path)
 
@@ -92,6 +76,17 @@ func (a *App) Router(path string, procedures ...func(IApp, ...*echo.Group)) IApp
 		procedure(a, group)
 	}
 
+	a.middlewares = []ProcedureCallback[any, any]{}
+
+	return a
+}
+
+func (a *App) Middlewares() []ProcedureCallback[any, any] {
+	return a.middlewares
+}
+
+func (a *App) Use(middlewares ...ProcedureCallback[any, any]) IApp {
+	a.middlewares = append(a.middlewares, middlewares...)
 	return a
 }
 
@@ -160,5 +155,6 @@ func NewXRPC(cfg ...XRPCConfig) IApp {
 			sharedValue: map[string]any{},
 			Injector:    i,
 		},
+		middlewares: []ProcedureCallback[any, any]{},
 	}
 }

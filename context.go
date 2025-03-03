@@ -15,6 +15,10 @@ type Context[T, R any] struct {
 	Input    T
 }
 
+func (c *Context[T, R]) Header(key string) string {
+	return c.ec.Request().Header.Get(key)
+}
+
 func (c *Context[T, R]) Json(status int, body R) error {
 	return c.ec.JSON(status, body)
 }

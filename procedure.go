@@ -8,21 +8,21 @@ import (
 	"github.com/struckchure/xrpc/validation"
 )
 
-type ProcedureHandler func(IApp, ...*echo.Group)
 type ProcedureCallback[T, R any] func(Context[T, R]) error
 
 type IProcedure[T, R any] interface {
 	Input(*validation.Validator) IProcedure[T, R]
 	Use(...ProcedureCallback[T, R]) IProcedure[T, R]
-	Query(ProcedureCallback[T, R]) ProcedureHandler
-	Mutation(ProcedureCallback[T, R]) ProcedureHandler
+	Query(ProcedureCallback[T, R]) func(IApp, ...*echo.Group)
+	Mutation(ProcedureCallback[T, R]) func(IApp, ...*echo.Group)
 }
 
 type Procedure[T, R any] struct {
-	name        string
-	validator   *validation.Validator
-	ctx         Context[T, R]
-	middlewares []ProcedureCallback[T, R]
+	name            string
+	validator       *validation.Validator
+	ctx             Context[T, R]
+	middlewares     []ProcedureCallback[T, R]
+	rootMiddlewares []ProcedureCallback[any, any]
 }
 
 func (p *Procedure[T, R]) Input(v *validation.Validator) IProcedure[T, R] {
@@ -62,6 +62,36 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, 
 		return nil
 	}
 
+	for _, middleware := range p.rootMiddlewares {
+		if middlewareErr != nil && !proceedToNext {
+			break
+		}
+
+		err := middleware(Context[any, any]{
+			ec:          p.ctx.ec,
+			next:        p.ctx.next,
+			sharedValue: p.ctx.sharedValue,
+
+			Injector: p.ctx.Injector,
+			Input:    p.ctx.Input,
+		},
+		)
+		if err != nil {
+			middlewareErr = err
+		}
+
+		proceedToNext = false
+	}
+
+	if middlewareErr != nil {
+		switch err := middlewareErr.(type) {
+		case *XRPCError:
+			return c.JSON(err.Code, echo.Map{"detail": err.Detail})
+		default:
+			return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
+		}
+	}
+
 	for _, middleware := range p.middlewares {
 		if middlewareErr != nil && !proceedToNext {
 			break
@@ -84,17 +114,25 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, 
 		}
 	}
 
-	return callback(p.ctx)
+	err := callback(p.ctx)
+	if err != nil {
+		switch err := err.(type) {
+		case *XRPCError:
+			return c.JSON(err.Code, echo.Map{"detail": err.Detail})
+		}
+	}
+	return err
 }
 
-func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) ProcedureHandler {
-	return func(t IApp, groups ...*echo.Group) {
-		p.ctx.Injector = t.Ctx().Injector
-		p.ctx.sharedValue = t.Ctx().sharedValue
+func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) func(IApp, ...*echo.Group) {
+	return func(app IApp, groups ...*echo.Group) {
+		p.ctx.Injector = app.Ctx().Injector
+		p.ctx.sharedValue = app.Ctx().sharedValue
 
-		path := t.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+		p.rootMiddlewares = append(p.rootMiddlewares, app.Middlewares()...)
+		path := app.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
 
-		t.Spec(func(spec TRPCSpec) TRPCSpec {
+		app.Spec(func(spec TRPCSpec) TRPCSpec {
 			spec.Procedures = append(spec.Procedures, XRPCSpecProcedure{
 				Path:   path,
 				Type:   XRPCSpecProcedureTypeQuery,
@@ -107,14 +145,15 @@ func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) ProcedureHandl
 	}
 }
 
-func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) ProcedureHandler {
-	return func(t IApp, groups ...*echo.Group) {
-		p.ctx.Injector = t.Ctx().Injector
-		p.ctx.sharedValue = t.Ctx().sharedValue
+func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) func(IApp, ...*echo.Group) {
+	return func(app IApp, groups ...*echo.Group) {
+		p.ctx.Injector = app.Ctx().Injector
+		p.ctx.sharedValue = app.Ctx().sharedValue
 
-		path := t.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+		p.rootMiddlewares = append(p.rootMiddlewares, app.Middlewares()...)
+		path := app.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
 
-		t.Spec(func(spec TRPCSpec) TRPCSpec {
+		app.Spec(func(spec TRPCSpec) TRPCSpec {
 			spec.Procedures = append(spec.Procedures, XRPCSpecProcedure{
 				Path:   path,
 				Type:   XRPCSpecProcedureTypeMutation,

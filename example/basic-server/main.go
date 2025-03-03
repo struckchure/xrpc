@@ -43,11 +43,12 @@ func main() {
 				},
 			).
 			Input(validation.NewValidator().
-				Field("Skip", validation.Int().Min(0).Required()).
+				Field("Skip", validation.Int().Min(0)).
 				Field("Limit", validation.Int().Max(10)),
 			).
 			Query(func(c xrpc.Context[ListPostInput, []Post]) error {
 				fmt.Println(c.Locals("m2"))
+				fmt.Println(c.Locals("userId"))
 				carService := do.MustInvoke[*CarService](c.Injector)
 				carService.Start()
 

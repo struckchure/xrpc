@@ -13,7 +13,7 @@ type StringValidator struct {
 	rules []Rule
 }
 
-func (s *StringValidator) isStringEmpty(val reflect.Value) bool {
+func (s *StringValidator) isEmpty(val reflect.Value) bool {
 	if val.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return true // Nil pointer is considered empty
@@ -21,16 +21,11 @@ func (s *StringValidator) isStringEmpty(val reflect.Value) bool {
 		val = val.Elem()
 	}
 
-	return s.isString(val)
+	return len(val.String()) == 0
 }
 
 func (s *StringValidator) isString(val reflect.Value) bool {
-	switch val.Kind() {
-	case reflect.String:
-		return val.Len() == 0
-	default:
-		return false // Not a string type
-	}
+	return val.Kind() == reflect.String
 }
 
 func (s *StringValidator) Required(message ...string) *StringValidator {
@@ -38,19 +33,19 @@ func (s *StringValidator) Required(message ...string) *StringValidator {
 		message = append(message, "field is required")
 	}
 
+	s.TypeCheck()
+
 	s.rules = addRule(s.rules, Rule{
 		name: "Required",
 		callback: func(v ...any) error {
 			val := v[0].(reflect.Value)
-			if s.isStringEmpty(val) {
+			if s.isEmpty(val) {
 				return errors.New(message[0])
 			}
 
 			return nil
 		},
 	})
-
-	s.TypeCheck()
 
 	return s
 }
