@@ -43,7 +43,7 @@ func main() {
 				},
 			).
 			Input(validation.NewValidator().
-				Field("Skip", validation.Int().Min(0)).
+				Field("Skip", validation.Int().Min(0).Required()).
 				Field("Limit", validation.Int().Max(10)),
 			).
 			Query(func(c xrpc.Context[ListPostInput, []Post]) error {

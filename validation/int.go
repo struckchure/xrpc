@@ -12,23 +12,22 @@ type IntValidator struct {
 	rules []Rule
 }
 
-func (i *IntValidator) isIntEmpty(val reflect.Value) bool {
+func (i *IntValidator) isEmpty(val reflect.Value) bool {
 	if val.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return true // Nil pointer is considered empty
 		}
-		val = val.Elem()
 	}
 
-	return i.isInt(val)
+	return false
 }
 
 func (i *IntValidator) isInt(val reflect.Value) bool {
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return val.Int() == 0
+		return true
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return val.Uint() == 0
+		return true
 	default:
 		return false // Not an integer type
 	}
@@ -39,19 +38,19 @@ func (i *IntValidator) Required(message ...string) *IntValidator {
 		message = append(message, "field is required")
 	}
 
+	i.TypeCheck()
+
 	i.rules = addRule(i.rules, Rule{
 		name: "Required",
 		callback: func(v ...any) error {
 			val := v[0].(reflect.Value)
-			if i.isIntEmpty(val) {
+			if i.isEmpty(val) {
 				return errors.New(message[0])
 			}
 
 			return nil
 		},
 	})
-
-	i.TypeCheck()
 
 	return i
 }

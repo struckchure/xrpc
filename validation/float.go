@@ -3,7 +3,6 @@ package validation
 import (
 	"errors"
 	"fmt"
-	"math"
 	"reflect"
 
 	"github.com/samber/lo"
@@ -13,21 +12,20 @@ type FloatValidator struct {
 	rules []Rule
 }
 
-func (f *FloatValidator) isFloatEmpty(val reflect.Value) bool {
+func (f *FloatValidator) isEmpty(val reflect.Value) bool {
 	if val.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return true // Nil pointer is considered empty
 		}
-		val = val.Elem()
 	}
 
-	return f.isFloat(val)
+	return false
 }
 
 func (f *FloatValidator) isFloat(val reflect.Value) bool {
 	switch val.Kind() {
 	case reflect.Float32, reflect.Float64:
-		return val.Float() == 0.0 || math.IsNaN(val.Float())
+		return true
 	default:
 		return false // Not a float type
 	}
@@ -38,19 +36,19 @@ func (f *FloatValidator) Required(message ...string) *FloatValidator {
 		message = append(message, "field is required")
 	}
 
+	f.TypeCheck()
+
 	f.rules = addRule(f.rules, Rule{
 		name: "Required",
 		callback: func(v ...any) error {
 			val := v[0].(reflect.Value)
-			if f.isFloatEmpty(val) {
+			if f.isEmpty(val) {
 				return errors.New(message[0])
 			}
 
 			return nil
 		},
 	})
-
-	f.TypeCheck()
 
 	return f
 }
