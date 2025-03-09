@@ -71,11 +71,11 @@ procedures:
             - name: Id
               alias: id
               type: int
-              nillable: true
+              nillable: false
             - name: AuthorId
               alias: author_id
               type: string
-              nillable: true
+              nillable: false
         nillable: false
       output:
         type_name: Post

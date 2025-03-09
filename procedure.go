@@ -1,8 +1,8 @@
 package xrpc
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/struckchure/xrpc/validation"
@@ -13,16 +13,15 @@ type ProcedureCallback[T, R any] func(Context[T, R]) error
 type IProcedure[T, R any] interface {
 	Input(*validation.Validator) IProcedure[T, R]
 	Use(...ProcedureCallback[T, R]) IProcedure[T, R]
-	Query(ProcedureCallback[T, R]) func(IApp, ...*echo.Group)
-	Mutation(ProcedureCallback[T, R]) func(IApp, ...*echo.Group)
+	Query(ProcedureCallback[T, R]) func(string, IApp)
+	Mutation(ProcedureCallback[T, R]) func(string, IApp)
 }
 
 type Procedure[T, R any] struct {
-	name            string
-	validator       *validation.Validator
-	ctx             Context[T, R]
-	middlewares     []ProcedureCallback[T, R]
-	rootMiddlewares []ProcedureCallback[any, any]
+	name        string
+	validator   *validation.Validator
+	ctx         Context[T, R]
+	middlewares []ProcedureCallback[T, R]
 }
 
 func (p *Procedure[T, R]) Input(v *validation.Validator) IProcedure[T, R] {
@@ -52,67 +51,8 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, 
 		}
 	}
 
-	var middlewareErr error = nil
-	proceedToNext := false
-
 	p.ctx.ec = c
 	p.ctx.Input = input
-	p.ctx.next = func() error {
-		proceedToNext = true
-		return nil
-	}
-
-	for _, middleware := range p.rootMiddlewares {
-		if middlewareErr != nil && !proceedToNext {
-			break
-		}
-
-		err := middleware(Context[any, any]{
-			ec:          p.ctx.ec,
-			next:        p.ctx.next,
-			sharedValue: p.ctx.sharedValue,
-
-			Injector: p.ctx.Injector,
-			Input:    p.ctx.Input,
-		},
-		)
-		if err != nil {
-			middlewareErr = err
-		}
-
-		proceedToNext = false
-	}
-
-	if middlewareErr != nil {
-		switch err := middlewareErr.(type) {
-		case *XRPCError:
-			return c.JSON(err.Code, echo.Map{"detail": err.Detail})
-		default:
-			return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
-		}
-	}
-
-	for _, middleware := range p.middlewares {
-		if middlewareErr != nil && !proceedToNext {
-			break
-		}
-
-		err := middleware(p.ctx)
-		if err != nil {
-			middlewareErr = err
-		}
-
-		proceedToNext = false
-	}
-
-	if middlewareErr != nil {
-		switch err := middlewareErr.(type) {
-		case *XRPCError:
-			return c.JSON(err.Code, echo.Map{"detail": err.Detail})
-		default:
-			return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
-		}
-	}
 
 	err := callback(p.ctx)
 	if err != nil {
@@ -124,13 +64,68 @@ func (p *Procedure[T, R]) handler(c echo.Context, callback ProcedureCallback[T, 
 	return err
 }
 
-func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) func(IApp, ...*echo.Group) {
-	return func(app IApp, groups ...*echo.Group) {
+func (p *Procedure[T, R]) loadMiddlewares(app IApp) []echo.MiddlewareFunc {
+	var middlewareFuncs []echo.MiddlewareFunc = []echo.MiddlewareFunc{}
+
+	for _, middleware := range app.Ctx().rootMiddlewares {
+		middlewareFunc := func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				app.Ctx(func(innerCtx Context[any, any]) Context[any, any] {
+					innerCtx.ec = c
+					return innerCtx
+				})
+
+				err := middleware(app.Ctx())
+				if err != nil {
+					switch err := err.(type) {
+					case *XRPCError:
+						return c.JSON(err.Code, echo.Map{"detail": err.Detail})
+					default:
+						return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
+					}
+				}
+
+				return next(c)
+			}
+		}
+		middlewareFuncs = append(middlewareFuncs, middlewareFunc)
+	}
+
+	for _, middleware := range p.middlewares {
+		middlewareFunc := func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				p.ctx.ec = c
+
+				err := middleware(p.ctx)
+				if err != nil {
+					switch err := err.(type) {
+					case *XRPCError:
+						return c.JSON(err.Code, echo.Map{"detail": err.Detail})
+					default:
+						return c.JSON(http.StatusInternalServerError, echo.Map{"detail": err})
+					}
+				}
+				return next(c)
+			}
+		}
+		middlewareFuncs = append(middlewareFuncs, middlewareFunc)
+	}
+
+	return middlewareFuncs
+}
+
+func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) func(string, IApp) {
+	return func(path string, app IApp) {
 		p.ctx.Injector = app.Ctx().Injector
 		p.ctx.sharedValue = app.Ctx().sharedValue
+		p.ctx.rootMiddlewares = app.Ctx().rootMiddlewares
 
-		p.rootMiddlewares = append(p.rootMiddlewares, app.Middlewares()...)
-		path := app.Get(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+		path = JoinPath(path, p.name)
+		path = app.Get(Route{
+			path:        path,
+			handler:     func(c echo.Context) error { return p.handler(c, callback) },
+			middlewares: p.loadMiddlewares(app),
+		})
 
 		app.Spec(func(spec TRPCSpec) TRPCSpec {
 			spec.Procedures = append(spec.Procedures, XRPCSpecProcedure{
@@ -142,16 +137,23 @@ func (p *Procedure[T, R]) Query(callback ProcedureCallback[T, R]) func(IApp, ...
 
 			return spec
 		})
+
+		fmt.Printf("[xRPC] [%s] %s\n", XRPCSpecProcedureTypeQuery, path)
 	}
 }
 
-func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) func(IApp, ...*echo.Group) {
-	return func(app IApp, groups ...*echo.Group) {
+func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) func(string, IApp) {
+	return func(path string, app IApp) {
 		p.ctx.Injector = app.Ctx().Injector
 		p.ctx.sharedValue = app.Ctx().sharedValue
+		p.ctx.rootMiddlewares = app.Ctx().rootMiddlewares
 
-		p.rootMiddlewares = append(p.rootMiddlewares, app.Middlewares()...)
-		path := app.Post(p.name, func(c echo.Context) error { return p.handler(c, callback) }, groups...)
+		path = JoinPath(path, p.name)
+		path = app.Post(Route{
+			path:        path,
+			handler:     func(c echo.Context) error { return p.handler(c, callback) },
+			middlewares: p.loadMiddlewares(app),
+		})
 
 		app.Spec(func(spec TRPCSpec) TRPCSpec {
 			spec.Procedures = append(spec.Procedures, XRPCSpecProcedure{
@@ -163,17 +165,11 @@ func (p *Procedure[T, R]) Mutation(callback ProcedureCallback[T, R]) func(IApp, 
 
 			return spec
 		})
+
+		fmt.Printf("[xRPC] [%s] %s\n", XRPCSpecProcedureTypeMutation, path)
 	}
 }
 
 func NewProcedure[T, R any](name string) IProcedure[T, R] {
-	if !strings.HasPrefix(name, "/") {
-		name = "/" + name
-	}
-
-	if !strings.HasSuffix(name, "/") {
-		name = name + "/"
-	}
-
-	return &Procedure[T, R]{name: name}
+	return &Procedure[T, R]{name: StripSlash(name)}
 }

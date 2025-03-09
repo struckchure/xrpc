@@ -22,7 +22,7 @@ func main() {
 	t.Use(func(c xrpc.Context[any, any]) error {
 		c.Locals("userId", "1290")
 
-		return c.Next()
+		return nil
 	})
 
 	t.Router("post",
@@ -31,15 +31,15 @@ func main() {
 				func(c xrpc.Context[ListPostInput, []Post]) error {
 					fmt.Println("Middleware 1")
 
-					return c.Next()
-					// return &xrpc.TRPCError{Code: 401, Detail: "something went wrong"}
+					// return &xrpc.XRPCError{Code: 401, Detail: "something went wrong"}
+					return nil
 				},
 				func(c xrpc.Context[ListPostInput, []Post]) error {
 					fmt.Println("Middleware 2")
 
 					c.Locals("m2", true)
 
-					return c.Next()
+					return nil
 				},
 			).
 			Input(validation.NewValidator().

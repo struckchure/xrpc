@@ -17,6 +17,6 @@ type CreatePostInput struct {
 }
 
 type GetPostInput struct {
-	Id       *int    `query:"id" json:"id"`
-	AuthorId *string `query:"author_id" json:"author_id"`
+	Id       int    `query:"id" json:"id"`
+	AuthorId string `query:"author_id" json:"author_id"`
 }

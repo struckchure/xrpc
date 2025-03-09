@@ -145,3 +145,45 @@ func WriteFile(filename string, content string) error {
 
 	return nil // Success
 }
+
+func StripSlash(path string) string {
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	if !strings.HasSuffix(path, "/") {
+		path = path + "/"
+	}
+
+	return path
+}
+
+func JoinPath(paths ...string) string {
+	// Filter out empty strings
+	var nonEmptyPaths []string
+	for _, path := range paths {
+		if path != "" {
+			nonEmptyPaths = append(nonEmptyPaths, path)
+		}
+	}
+
+	// Join paths with "/"
+	joined := strings.Join(nonEmptyPaths, "/")
+
+	// Remove duplicate slashes
+	for strings.Contains(joined, "//") {
+		joined = strings.ReplaceAll(joined, "//", "/")
+	}
+
+	// Ensure path starts with "/"
+	if !strings.HasPrefix(joined, "/") {
+		joined = "/" + joined
+	}
+
+	// Ensure path ends with "/"
+	if !strings.HasSuffix(joined, "/") {
+		joined = joined + "/"
+	}
+
+	return joined
+}

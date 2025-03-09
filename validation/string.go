@@ -25,6 +25,10 @@ func (s *StringValidator) isEmpty(val reflect.Value) bool {
 }
 
 func (s *StringValidator) isString(val reflect.Value) bool {
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
 	return val.Kind() == reflect.String
 }
 

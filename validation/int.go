@@ -23,6 +23,10 @@ func (i *IntValidator) isEmpty(val reflect.Value) bool {
 }
 
 func (i *IntValidator) isInt(val reflect.Value) bool {
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return true

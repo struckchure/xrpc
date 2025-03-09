@@ -8,8 +8,10 @@ import (
 
 type Context[T, R any] struct {
 	ec          echo.Context
-	next        func() error
 	sharedValue map[string]any
+
+	middlewares     []ProcedureCallback[T, R]
+	rootMiddlewares []ProcedureCallback[any, any]
 
 	Injector *do.Injector
 	Input    T
@@ -25,14 +27,6 @@ func (c *Context[T, R]) Json(status int, body R) error {
 
 func (c *Context[T, R]) String(status int, body string) error {
 	return c.ec.String(status, body)
-}
-
-func (c *Context[T, R]) Next() error {
-	if c.next != nil {
-		return c.next()
-	}
-
-	return nil
 }
 
 func (c *Context[T, R]) Locals(key string, value ...interface{}) interface{} {
