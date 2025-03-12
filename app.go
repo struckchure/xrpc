@@ -74,14 +74,14 @@ func (a *App) GenerateSpec() {
 }
 
 func (a *App) Router(path string, procedures ...func(string, IApp)) IApp {
+	for _, procedure := range procedures {
+		procedure(path, a)
+	}
+
 	a.Ctx(func(c Context[any, any]) Context[any, any] {
 		c.rootMiddlewares = []ProcedureCallback[any, any]{}
 		return c
 	})
-
-	for _, procedure := range procedures {
-		procedure(path, a)
-	}
 
 	return a
 }

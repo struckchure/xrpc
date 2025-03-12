@@ -29,6 +29,10 @@ func (c *Context[T, R]) String(status int, body string) error {
 	return c.ec.String(status, body)
 }
 
+func (c *Context[T, R]) Redirect(status int, url string) error {
+	return c.ec.Redirect(status, url)
+}
+
 func (c *Context[T, R]) Locals(key string, value ...interface{}) interface{} {
 	if len(value) > 0 {
 		c.sharedValue[key] = value[0]
