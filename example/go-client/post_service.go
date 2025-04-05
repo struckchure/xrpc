@@ -87,8 +87,8 @@ func (c *PostServiceClient) PostCreate(input CreatePostInput) (*Post, error) {
 }
 
 type GetPostInput struct {
-	Id       *int    `json:"id"`
-	AuthorId *string `json:"author_id"`
+	Id       int    `json:"id"`
+	AuthorId string `json:"author_id"`
 }
 
 func (c *PostServiceClient) PostGet(input GetPostInput) (*Post, error) {

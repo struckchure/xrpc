@@ -12,7 +12,7 @@ import (
 func main() {
 	spec := xrpc.TRPCSpec{}
 
-	data, err := os.ReadFile("./example/basic-server/xrpc.yaml")
+	data, err := os.ReadFile("../basic-server/xrpc.yaml")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -24,9 +24,9 @@ func main() {
 		return
 	}
 
-	err = clients.GenerateTypeScriptClient(clients.TypeScriptClientConfig{
+	err = clients.GenerateTypeScriptKyClient(clients.TypeScriptClientConfig{
 		Spec:   spec,
-		Output: "./example/ts-client/post_service.ts",
+		Output: "./post_service.ts",
 	})
 	if err != nil {
 		fmt.Println(err)

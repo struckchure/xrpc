@@ -27,12 +27,23 @@ func (f *TSFile) Render() string {
 }
 
 type TSImport struct {
-	Module string
-	Names  []string
+	Default string   // e.g., "ky"
+	Names   []string // named imports like "useState", "useEffect"
+	Module  string   // e.g., "react"
 }
 
 func (i *TSImport) Render() string {
-	return fmt.Sprintf("import { %s } from \"%s\";", strings.Join(i.Names, ", "), i.Module)
+	parts := []string{}
+
+	if i.Default != "" {
+		parts = append(parts, i.Default)
+	}
+
+	if len(i.Names) > 0 {
+		parts = append(parts, fmt.Sprintf("{ %s }", strings.Join(i.Names, ", ")))
+	}
+
+	return fmt.Sprintf("import %s from \"%s\";", strings.Join(parts, ", "), i.Module)
 }
 
 type TSInterface struct {

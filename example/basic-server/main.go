@@ -12,7 +12,7 @@ func main() {
 	t := xrpc.NewXRPC(xrpc.XRPCConfig{
 		Name:            "Post Service",
 		ServerUrl:       "http://localhost:9090",
-		SpecPath:        "./example/basic-server/xrpc.yaml",
+		SpecPath:        "./xrpc.yaml",
 		AutoGenTRPCSpec: true,
 	})
 

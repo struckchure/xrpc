@@ -42,7 +42,7 @@ type TypeScriptClientConfig struct {
 	PostHook func()
 }
 
-func GenerateTypeScriptClient(cfg TypeScriptClientConfig) error {
+func GenerateTypeScriptFetchClient(cfg TypeScriptClientConfig) error {
 	file := &internals.TSFile{}
 
 	types := map[string]bool{} // Track declared types

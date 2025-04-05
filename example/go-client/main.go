@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/samber/lo"
 	"github.com/struckchure/xrpc"
 	"github.com/struckchure/xrpc/clients"
 	"gopkg.in/yaml.v3"
@@ -13,7 +12,7 @@ import (
 func main() {
 	spec := xrpc.TRPCSpec{}
 
-	data, err := os.ReadFile("./example/basic-server/xrpc.yaml")
+	data, err := os.ReadFile("../basic-server/xrpc.yaml")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -27,7 +26,7 @@ func main() {
 
 	err = clients.GenerateGolangClient(clients.GolangClientConfig{
 		Spec:    spec,
-		Output:  "./example/client/post_service.go",
+		Output:  "./post_service.go",
 		PkgName: "main",
 	})
 	if err != nil {
@@ -35,31 +34,31 @@ func main() {
 		return
 	}
 
-	client := NewPostServiceClient()
-	postList, err := client.PostList(ListPostInput{
-		Skip:  lo.ToPtr(2),
-		Limit: lo.ToPtr(10),
-	})
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("%#v\n", postList)
+	// client := NewPostServiceClient()
+	// postList, err := client.PostList(ListPostInput{
+	// 	Skip:  lo.ToPtr(2),
+	// 	Limit: lo.ToPtr(10),
+	// })
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Printf("%#v\n", postList)
 
-	postCreate, err := client.PostCreate(CreatePostInput{
-		Title:   "OneTwoThreeFourFiveSix",
-		Content: "OneTwoThreeFourFiveSix",
-	})
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("%#v\n", postCreate)
+	// postCreate, err := client.PostCreate(CreatePostInput{
+	// 	Title:   "OneTwoThreeFourFiveSix",
+	// 	Content: "OneTwoThreeFourFiveSix",
+	// })
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Printf("%#v\n", postCreate)
 
-	postGet, err := client.PostGet(GetPostInput{Id: lo.ToPtr(12), AuthorId: lo.ToPtr("id-1")})
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("%#v\n", postGet)
+	// postGet, err := client.PostGet(GetPostInput{Id: lo.ToPtr(12), AuthorId: lo.ToPtr("id-1")})
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Printf("%#v\n", postGet)
 }
